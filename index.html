@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>DailyFlow - 个人每日自律打卡</title>
+  <meta name="description" content="专为运动锻炼、法语学习、营养摄入打造的个人自律打卡系统，支持离线存储与 GitHub Pages 一键部署。">
+
+  <!-- Mobile & PWA Meta -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="DailyFlow">
+  <meta name="theme-color" content="#3b82f6">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%233b82f6'><path d='M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5'/></svg>">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eff6ff',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Canvas Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
+
+  <!-- Top Navigation Header -->
+  <header class="sticky top-0 z-40 glass-card border-b border-slate-200/80 dark:border-slate-800/80">
+    <div class="max-w-3xl mx-auto px-4 h-16 flex items-center justify-between">
+      <!-- Brand Logo -->
+      <div class="flex items-center gap-2.5">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 text-white flex items-center justify-center shadow-md shadow-blue-500/20">
+          <i data-lucide="sparkles" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <h1 class="text-base font-bold tracking-tight text-slate-900 dark:text-white leading-none">DailyFlow</h1>
+          <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">运动 · 法语 · 营养</p>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center gap-2">
+        <!-- Add Custom Habit Button -->
+        <button id="btn-open-custom-habit" title="添加新习惯" class="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 text-xs font-semibold hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors">
+          <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+          <span class="hidden sm:inline">新增习惯</span>
+        </button>
+
+        <!-- Theme Toggle -->
+        <button id="theme-toggle-btn" onclick="toggleTheme()" title="切换明亮/深色模式" class="w-9 h-9 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+          <i data-lucide="moon" class="w-4 h-4 text-slate-600 dark:text-slate-300"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="max-w-3xl mx-auto px-4 flex border-t border-slate-200/60 dark:border-slate-800/60">
+      <button data-tab="today" class="nav-tab-btn active flex-1 py-2.5 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors border-b-2 border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400">
+        <i data-lucide="check-square" class="w-4 h-4"></i>
+        <span>今日打卡</span>
+      </button>
+      <button data-tab="analytics" class="nav-tab-btn flex-1 py-2.5 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 border-b-2 border-transparent">
+        <i data-lucide="bar-chart-2" class="w-4 h-4"></i>
+        <span>统计热力图</span>
+      </button>
+      <button data-tab="calendar" class="nav-tab-btn flex-1 py-2.5 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 border-b-2 border-transparent">
+        <i data-lucide="calendar" class="w-4 h-4"></i>
+        <span>历史日历</span>
+      </button>
+      <button data-tab="settings" class="nav-tab-btn flex-1 py-2.5 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 border-b-2 border-transparent">
+        <i data-lucide="settings-2" class="w-4 h-4"></i>
+        <span>设置备份</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="flex-1 max-w-3xl w-full mx-auto px-4 py-6">
+
+    <!-- VIEW 1: TODAY'S DASHBOARD -->
+    <section id="view-today" class="space-y-5">
+      <!-- Date Switcher & Streak Banner -->
+      <div class="glass-card rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-slate-800">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+          <!-- Date & Day info -->
+          <div>
+            <div id="today-header-date" class="text-sm sm:text-base font-bold text-slate-800 dark:text-slate-100">
+              <!-- Rendered via JS -->
+            </div>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">保持自律，积跬步以致千里</p>
+          </div>
+
+          <!-- Date Navigation Bar -->
+          <div class="flex items-center gap-1.5 self-start sm:self-auto">
+            <button onclick="changeDate(-1)" title="前一天" class="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300">
+              <i data-lucide="chevron-left" class="w-4 h-4"></i>
+            </button>
+            <button onclick="jumpToToday()" class="px-2.5 py-1 text-xs font-medium rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300">
+              今天
+            </button>
+            <button onclick="changeDate(1)" title="后一天" class="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300">
+              <i data-lucide="chevron-right" class="w-4 h-4"></i>
+            </button>
+            <!-- Streak pill -->
+            <div id="header-streak-badge" class="ml-1">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Daily Progress Bar -->
+        <div class="space-y-1.5">
+          <div class="flex items-center justify-between text-xs">
+            <span class="font-medium text-slate-600 dark:text-slate-400">今日打卡进度</span>
+            <span id="today-progress-text" class="font-bold text-blue-600 dark:text-blue-400">0/3 项完成 (0%)</span>
+          </div>
+          <div class="w-full h-2.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+            <div id="today-progress-bar" class="h-full bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full transition-all duration-500" style="width: 0%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Habit Cards Container -->
+      <div id="today-habits-container" class="space-y-4">
+        <!-- Rendered via JS: Sport, French, Nutrition, Custom Habits, Reflection -->
+      </div>
+    </section>
+
+    <!-- VIEW 2: ANALYTICS & HEATMAP -->
+    <section id="view-analytics" class="hidden space-y-5">
+      <!-- Streak & KPI Cards -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <div class="glass-card rounded-2xl p-4 border border-slate-200 dark:border-slate-800">
+          <div class="flex items-center gap-2 text-orange-500 text-xs font-semibold mb-1">
+            <i data-lucide="flame" class="w-4 h-4"></i>
+            <span>当前连续</span>
+          </div>
+          <div id="stat-current-streak" class="text-2xl font-bold text-slate-800 dark:text-slate-100">0 天</div>
+          <div class="text-[11px] text-slate-400 mt-0.5">保持当前的节奏！</div>
+        </div>
+
+        <div class="glass-card rounded-2xl p-4 border border-slate-200 dark:border-slate-800">
+          <div class="flex items-center gap-2 text-amber-500 text-xs font-semibold mb-1">
+            <i data-lucide="trophy" class="w-4 h-4"></i>
+            <span>最长连续</span>
+          </div>
+          <div id="stat-longest-streak" class="text-2xl font-bold text-slate-800 dark:text-slate-100">0 天</div>
+          <div class="text-[11px] text-slate-400 mt-0.5">历史最佳连胜记录</div>
+        </div>
+
+        <div class="glass-card rounded-2xl p-4 border border-slate-200 dark:border-slate-800">
+          <div class="flex items-center gap-2 text-blue-500 text-xs font-semibold mb-1">
+            <i data-lucide="calendar-check" class="w-4 h-4"></i>
+            <span>累计打卡</span>
+          </div>
+          <div id="stat-total-days" class="text-2xl font-bold text-slate-800 dark:text-slate-100">0 天</div>
+          <div class="text-[11px] text-slate-400 mt-0.5">所有打卡活跃天数</div>
+        </div>
+
+        <div class="glass-card rounded-2xl p-4 border border-slate-200 dark:border-slate-800">
+          <div class="flex items-center gap-2 text-emerald-500 text-xs font-semibold mb-1">
+            <i data-lucide="dumbbell" class="w-4 h-4"></i>
+            <span>运动总时长</span>
+          </div>
+          <div id="stat-total-sport" class="text-2xl font-bold text-slate-800 dark:text-slate-100">0 小时</div>
+          <div class="text-[11px] text-slate-400 mt-0.5">锻炼与挥洒汗水</div>
+        </div>
+
+        <div class="glass-card rounded-2xl p-4 border border-slate-200 dark:border-slate-800">
+          <div class="flex items-center gap-2 text-indigo-500 text-xs font-semibold mb-1">
+            <i data-lucide="book-open" class="w-4 h-4"></i>
+            <span>法语总学习</span>
+          </div>
+          <div id="stat-total-french" class="text-2xl font-bold text-slate-800 dark:text-slate-100">0 小时</div>
+          <div class="text-[11px] text-slate-400 mt-0.5">语言知识点滴积累</div>
+        </div>
+
+        <div class="glass-card rounded-2xl p-4 border border-slate-200 dark:border-slate-800">
+          <div class="flex items-center gap-2 text-sky-500 text-xs font-semibold mb-1">
+            <i data-lucide="droplet" class="w-4 h-4"></i>
+            <span>累计饮水总量</span>
+          </div>
+          <div id="stat-total-water" class="text-2xl font-bold text-slate-800 dark:text-slate-100">0 L</div>
+          <div class="text-[11px] text-slate-400 mt-0.5">健康补水生命之源</div>
+        </div>
+      </div>
+
+      <!-- GitHub Activity Contribution Heatmap -->
+      <div class="glass-card rounded-2xl p-5 border border-slate-200 dark:border-slate-800">
+        <div class="flex items-center gap-2 mb-3">
+          <i data-lucide="grid" class="w-4 h-4 text-emerald-500"></i>
+          <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100">GitHub 风格打卡热力图 (Activity Grid)</h3>
+        </div>
+        <div id="heatmap-container">
+          <!-- Rendered via JS -->
+        </div>
+      </div>
+
+      <!-- Trend Charts: Sport & French -->
+      <div class="glass-card rounded-2xl p-5 border border-slate-200 dark:border-slate-800">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-2">
+            <i data-lucide="trending-up" class="w-4 h-4 text-blue-500"></i>
+            <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100">近 14 天运动与学习时长 (分钟)</h3>
+          </div>
+        </div>
+        <div class="h-64 relative">
+          <canvas id="chart-duration"></canvas>
+        </div>
+      </div>
+
+      <!-- Trend Charts: Water Intake -->
+      <div class="glass-card rounded-2xl p-5 border border-slate-200 dark:border-slate-800">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-2">
+            <i data-lucide="waves" class="w-4 h-4 text-sky-500"></i>
+            <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100">近 14 天饮水量达标趋势 (杯)</h3>
+          </div>
+        </div>
+        <div class="h-56 relative">
+          <canvas id="chart-water"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 3: CALENDAR & HISTORY -->
+    <section id="view-calendar" class="hidden space-y-5">
+      <div class="glass-card rounded-2xl p-5 border border-slate-200 dark:border-slate-800">
+        <!-- Month Header Navigation -->
+        <div class="flex items-center justify-between mb-5">
+          <div class="flex items-center gap-2">
+            <i data-lucide="calendar" class="w-5 h-5 text-blue-500"></i>
+            <h3 id="calendar-month-title" class="text-base font-bold text-slate-800 dark:text-slate-100">2026年 9月</h3>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="prevCalendarMonth()" title="上一月" class="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300">
+              <i data-lucide="chevron-left" class="w-4 h-4"></i>
+            </button>
+            <button onclick="nextCalendarMonth()" title="下一月" class="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300">
+              <i data-lucide="chevron-right" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Weekdays Header -->
+        <div class="grid grid-cols-7 text-center text-xs font-semibold text-slate-400 mb-2">
+          <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
+        </div>
+
+        <!-- Days Grid -->
+        <div id="calendar-days-grid" class="grid grid-cols-7 gap-1.5">
+          <!-- Rendered via JS -->
+        </div>
+
+        <!-- Dots Legend -->
+        <div class="flex flex-wrap items-center justify-center gap-4 mt-5 pt-4 border-t border-slate-100 dark:border-slate-800/80 text-xs text-slate-500">
+          <div class="flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+            <span>运动已打卡</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+            <span>法语已打卡</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+            <span>营养已打卡</span>
+          </div>
+          <span class="text-slate-400 text-[11px]">(点击任意日期可查看或补卡)</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 4: SETTINGS & BACKUP -->
+    <section id="view-settings" class="hidden space-y-5">
+      <!-- Data Backup & Restore -->
+      <div class="glass-card rounded-2xl p-5 border border-slate-200 dark:border-slate-800">
+        <div class="flex items-center gap-2 mb-2">
+          <i data-lucide="shield-check" class="w-5 h-5 text-emerald-500"></i>
+          <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100">数据安全与本地备份</h3>
+        </div>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mb-4 leading-relaxed">
+          您的所有打卡数据均安全加密保存在本地浏览器中，绝无隐私泄露风险。建议定期导出 JSON 备份文件，方便更换设备时一键导入恢复。
+        </p>
+
+        <div class="flex flex-wrap gap-3">
+          <!-- Export Button -->
+          <button onclick="handleExportData()" class="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 transition-colors shadow-sm">
+            <i data-lucide="download" class="w-4 h-4"></i>
+            <span>导出数据备份 (JSON)</span>
+          </button>
+
+          <!-- Import Button -->
+          <label class="flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-semibold cursor-pointer transition-colors">
+            <i data-lucide="upload" class="w-4 h-4 text-blue-500"></i>
+            <span>导入备份文件</span>
+            <input type="file" accept=".json" onchange="handleImportData(event)" class="hidden" />
+          </label>
+        </div>
+      </div>
+
+      <!-- Demo Data & Reset Actions -->
+      <div class="glass-card rounded-2xl p-5 border border-slate-200 dark:border-slate-800">
+        <div class="flex items-center gap-2 mb-2">
+          <i data-lucide="sparkles" class="w-5 h-5 text-indigo-500"></i>
+          <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100">体验与快捷选项</h3>
+        </div>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mb-4 leading-relaxed">
+          想要快速预览打卡热力图和图表效果？您可以一键载入两周的示例打卡记录；也可以重置并清空所有记录从零开始。
+        </p>
+
+        <div class="flex flex-wrap gap-3">
+          <button onclick="handleSeedDemo()" class="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 text-xs font-semibold hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors">
+            <i data-lucide="database" class="w-4 h-4"></i>
+            <span>载入演示打卡记录</span>
+          </button>
+
+          <button onclick="handleResetAll()" class="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800 text-xs font-semibold hover:bg-rose-100 dark:hover:bg-rose-900/50 transition-colors">
+            <i data-lucide="trash-2" class="w-4 h-4"></i>
+            <span>清空所有打卡记录</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- GitHub Pages Deployment Guide Card -->
+      <div class="glass-card rounded-2xl p-5 border border-slate-200 dark:border-slate-800">
+        <div class="flex items-center gap-2 mb-2">
+          <i data-lucide="github" class="w-5 h-5 text-slate-800 dark:text-slate-200"></i>
+          <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100">如何部署到您的 GitHub Pages</h3>
+        </div>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mb-3 leading-relaxed">
+          本项目为纯静态现代网页，无任何依赖与构建步骤，30秒即可免费上线：
+        </p>
+        <ol class="list-decimal list-inside text-xs text-slate-600 dark:text-slate-300 space-y-1.5 leading-relaxed bg-slate-50 dark:bg-slate-900/80 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800">
+          <li>在 GitHub 上新建一个仓库（如 <code class="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-800 rounded font-mono">daily-checkin</code>）。</li>
+          <li>将本文件夹内所有文件通过 Git 推送（Push）到该仓库的 <code class="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-800 rounded font-mono">main</code> 分支。</li>
+          <li>在 GitHub 仓库主页，点击 <strong>Settings</strong> ➔ <strong>Pages</strong>。</li>
+          <li>在 <strong>Branch</strong> 下拉框选择 <strong>main</strong>，目录选择 <strong>/ (root)</strong>，点击 <strong>Save</strong>。</li>
+          <li>等待约 30 秒，刷新页面即可获得您的专属在线打卡网址！</li>
+        </ol>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Add Custom Habit Modal -->
+  <div id="modal-custom-habit" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="glass-card rounded-2xl w-full max-w-md p-6 border border-slate-200 dark:border-slate-800 shadow-2xl animate-scale-in">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-2">
+          <i data-lucide="plus-circle" class="w-5 h-5 text-blue-500"></i>
+          <h3 class="font-bold text-slate-800 dark:text-slate-100 text-base">添加自定义习惯</h3>
+        </div>
+        <button id="btn-close-modal" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form id="form-custom-habit" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">习惯名称</label>
+          <input type="text" id="custom-habit-name" required placeholder="如：早起早睡、冥想静心、阅读20页" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">习惯描述 (可选)</label>
+          <input type="text" id="custom-habit-desc" placeholder="如：晚上11点前放下手机准备入睡" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">图标样式</label>
+          <select id="custom-habit-icon" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="sparkles">✨ 灵感与光芒 (Sparkles)</option>
+            <option value="moon">🌙 早睡与冥想 (Moon)</option>
+            <option value="book">📖 读书与精进 (Book)</option>
+            <option value="coffee">☕ 晨起好时光 (Coffee)</option>
+            <option value="heart">❤️ 心灵与自爱 (Heart)</option>
+            <option value="sun">☀️ 晨光与散步 (Sun)</option>
+            <option value="check-circle-2">✅ 任务清单 (Check)</option>
+          </select>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="document.getElementById('modal-custom-habit').classList.add('hidden');document.getElementById('modal-custom-habit').classList.remove('flex')" class="px-4 py-2 rounded-xl text-xs font-medium text-slate-500 hover:text-slate-700 dark:hover:text-slate-300">
+            取消
+          </button>
+          <button type="submit" class="px-5 py-2 rounded-xl text-xs font-semibold bg-blue-600 text-white hover:bg-blue-700 shadow-sm transition-colors">
+            确认添加
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container"></div>
+
+  <!-- Application Logic Scripts -->
+  <script src="js/store.js"></script>
+  <script src="js/components.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "name": "DailyFlow - 每日生活自律打卡",
+  "short_name": "DailyFlow",
+  "description": "专为运动锻炼、法语学习、营养摄入打造的个人自律打卡系统",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0b0f19",
+  "theme_color": "#3b82f6",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512' fill='%233b82f6'><rect width='512' height='512' rx='128' fill='%232563eb'/><path d='M256 120l-120 70 120 70 120-70-120-70zm-120 140l120 70 120-70m-240 70l120 70 120-70' stroke='white' stroke-width='32' stroke-linecap='round' stroke-linejoin='round' fill='none'/></svg>",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}
